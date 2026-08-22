@@ -14,13 +14,19 @@ import argparse
 import hashlib
 import importlib.util
 import itertools
+import os
 import re
 import sys
 from collections import defaultdict
 from pathlib import Path
 
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(
+    os.environ.get(
+        "ZIBO_MOD_SOURCE_ROOT",
+        Path(__file__).resolve().parents[2] / "Zibo Mod",
+    )
+).expanduser().resolve()
 TAKEOFF_SOURCE = ROOT / "zibomod/takeoff_perf/generated/takeoff_tables.inc"
 LANDING_SOURCE = ROOT / "zibomod/landing_perf/generated/fcom_landing_tables.inc"
 OUTPUT = Path(__file__).resolve().parents[1] / "B738.tablet_perf_data.lua"
@@ -391,6 +397,15 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true", help="fail when the checked-in Lua data is stale")
     args = parser.parse_args()
+    required = (TAKEOFF_SOURCE, LANDING_SOURCE, TAKEOFF_GENERATOR)
+    missing = [str(path) for path in required if not path.is_file()]
+    if missing:
+        print(
+            "Maintainer source input is unavailable. Set ZIBO_MOD_SOURCE_ROOT "
+            "to the private Zibo Mod source checkout.\nMissing: " + "\n".join(missing),
+            file=sys.stderr,
+        )
+        return 2
     generated = generate()
     if args.check:
         if not OUTPUT.exists() or OUTPUT.read_text(encoding="utf-8") != generated:

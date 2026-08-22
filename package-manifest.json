@@ -1,0 +1,76 @@
+{
+  "aircraftFamily": "LevelUp 737NG Series v2 for X-Plane 12",
+  "modules": [
+    {
+      "conflictsWith": [],
+      "defaultEnabled": false,
+      "description": "Variant-specific XLua takeoff and landing performance calculations on the existing EFB pages.",
+      "displayName": "Tablet performance calculator",
+      "installationOrder": 30,
+      "moduleId": "tablet-performance-calculator",
+      "payloads": [
+        {
+          "path": "B738.tablet.lua.json",
+          "sha256": "acc504964bb8cdd8f59bc2db3ebaf342189c529a9b0cb2f7037428b2af531274",
+          "size": 828
+        },
+        {
+          "path": "B738.tablet_perf_data.lua",
+          "sha256": "948fe226b5dc488526e096197157fb68566bdd96f6cf357496ca598b2b957527",
+          "size": 6238626
+        },
+        {
+          "path": "B738.tablet_perf_core.lua",
+          "sha256": "fe99e266b2290652890598d21d06a8b468239cef70cea63c74e89c48959cd8d7",
+          "size": 27176
+        },
+        {
+          "path": "B738.tablet_perf_adapter.lua",
+          "sha256": "8314e09c1b1b422dfac86d3f3bb08ecb3d2428fde96a6726d5b4029e29c33741",
+          "size": 21907
+        }
+      ],
+      "policy": "optional",
+      "requires": [],
+      "targets": [
+        {
+          "operation": "exact-text-replacements-v1",
+          "payload": "B738.tablet.lua.json",
+          "relativePath": "plugins/xlua/scripts/B738.tablet/B738.tablet.lua",
+          "sourceSha256": []
+        },
+        {
+          "operation": "copy-file-v1",
+          "payload": "B738.tablet_perf_data.lua",
+          "relativePath": "plugins/xlua/scripts/B738.tablet/B738.tablet_perf_data.lua",
+          "resultSha256": "948fe226b5dc488526e096197157fb68566bdd96f6cf357496ca598b2b957527",
+          "sourceSha256": []
+        },
+        {
+          "operation": "copy-file-v1",
+          "payload": "B738.tablet_perf_core.lua",
+          "relativePath": "plugins/xlua/scripts/B738.tablet/B738.tablet_perf_core.lua",
+          "resultSha256": "fe99e266b2290652890598d21d06a8b468239cef70cea63c74e89c48959cd8d7",
+          "sourceSha256": []
+        },
+        {
+          "operation": "copy-file-v1",
+          "payload": "B738.tablet_perf_adapter.lua",
+          "relativePath": "plugins/xlua/scripts/B738.tablet/B738.tablet_perf_adapter.lua",
+          "resultSha256": "8314e09c1b1b422dfac86d3f3bb08ecb3d2428fde96a6726d5b4029e29c33741",
+          "sourceSha256": []
+        }
+      ]
+    }
+  ],
+  "packageId": "x-plane-zibo-40535-tablet-performance-calculator",
+  "packageType": "compatibilityPackage",
+  "packageVersion": "0.1.4",
+  "repositoryUrl": "https://github.com/wahltho/X-Plane-Zibo-LevelUp-737NG-Tablet-Performance-Calculator",
+  "restartRequired": true,
+  "schemaVersion": 3,
+  "supportedProducts": [
+    "levelup-737ng"
+  ],
+  "supportedUpstreamReleases": []
+}

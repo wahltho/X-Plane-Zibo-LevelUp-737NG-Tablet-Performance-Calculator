@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import os
 import shutil
 import subprocess
 import tempfile
@@ -9,10 +10,11 @@ from pathlib import Path
 
 
 PACKAGE = Path(__file__).resolve().parents[1]
-BASELINE = Path(
+DEFAULT_BASELINE = Path(
     "/Users/wahltho/dev/Zibo Mod/Original/Zibo Mod Original/"
     "B738X_XP12_4_05_35/plugins/xlua/scripts/B738.tablet/B738.tablet.lua"
 )
+BASELINE = Path(os.environ.get("B738_TABLET_BASELINE", DEFAULT_BASELINE))
 PAYLOADS = (
     "B738.tablet_perf_data.lua",
     "B738.tablet_perf_core.lua",
@@ -50,7 +52,7 @@ def exercise(line_ending: bytes) -> None:
         target.write_bytes(original)
 
         first_run = run_installer(folder)
-        assert "Package v0.1.3 payload verified; installation complete." in first_run.stdout
+        assert "Package v0.1.4 payload verified; installation complete." in first_run.stdout
         installed = target.read_bytes()
         assert (folder / "B738.tablet.lua.backup").read_bytes() == original
         assert installed.count(b"BEGIN UPSTREAM_TABLET_PERF_CALC DOFILE") == 1
@@ -62,7 +64,7 @@ def exercise(line_ending: bytes) -> None:
 
         first_hash = digest(installed)
         second_run = run_installer(folder)
-        assert "Package v0.1.3 payload verified." in second_run.stdout
+        assert "Package v0.1.4 payload verified." in second_run.stdout
         assert "Tablet hooks already installed and current; installation complete." in second_run.stdout
         assert digest(target.read_bytes()) == first_hash
         assert (folder / "B738.tablet.lua.backup").read_bytes() == original
@@ -124,13 +126,15 @@ def exercise_mixed_package_refusal() -> None:
             payload.write(b"-- stale or damaged payload\n")
 
         completed = run_installer(folder, expect=2)
-        assert "does not match package v0.1.3" in completed.stderr
+        assert "does not match package v0.1.4" in completed.stderr
         assert "extract the complete package again" in completed.stderr
         assert digest(target.read_bytes()) == original_hash
         assert not (folder / "B738.tablet.lua.backup").exists()
 
 
-assert BASELINE.is_file(), BASELINE
+if not BASELINE.is_file():
+    print(f"SKIP: set B738_TABLET_BASELINE to a stock Zibo 4.05.35/LevelUp tablet Lua: {BASELINE}")
+    raise SystemExit(0)
 exercise(b"\n")
 exercise(b"\r\n")
 exercise_missing_anchor()

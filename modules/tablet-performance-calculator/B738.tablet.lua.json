@@ -1,0 +1,35 @@
+{
+  "format": "exact-text-replacements-v1",
+  "replacements": [
+    {
+      "name": "Tablet performance calculator loader",
+      "newLines": [
+        "jit.off()",
+        "-- BEGIN UPSTREAM_TABLET_PERF_CALC DOFILE",
+        "dofile(\"B738.tablet_perf_adapter.lua\")",
+        "-- END UPSTREAM_TABLET_PERF_CALC DOFILE",
+        "-- --[["
+      ],
+      "oldLines": [
+        "jit.off()",
+        "-- --[["
+      ]
+    },
+    {
+      "name": "Tablet performance calculator hooks",
+      "newLines": [
+        "end",
+        "",
+        "-- BEGIN UPSTREAM_TABLET_PERF_CALC HOOKS",
+        "B738_upstream_perf_adapter.install()",
+        "-- END UPSTREAM_TABLET_PERF_CALC HOOKS",
+        "function page_app_rating()"
+      ],
+      "oldLines": [
+        "end",
+        "",
+        "function page_app_rating()"
+      ]
+    }
+  ]
+}

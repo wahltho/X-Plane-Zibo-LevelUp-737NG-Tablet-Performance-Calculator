@@ -1,11 +1,14 @@
-# Stand-alone takeoff and landing performance calculator patch for Zibo 4.05.35
+# Tablet takeoff and landing performance calculator for Zibo and LevelUp
 
 This unofficial patch makes the existing Tablet performance pages calculate
 takeoff and landing results locally in XLua. It targets the stock Zibo
 4.05.35 `B738.tablet` script and also follows the LevelUp variant selector used
 by the shared Zibo plugin.
 
-Release `v0.1.3` resolves legacy `73x`/Ultimate aircraft IDs when the shared
+Release `v0.1.4` adds a manifest-driven package for the X-Plane 737NG
+Maintenance Toolkit without changing the calculation runtime. The same release
+archive continues to support the stand-alone `z_Install.py` workflow. Release
+`v0.1.3` resolves legacy `73x`/Ultimate aircraft IDs when the shared
 plugin reports no modern variant ID, adds the 737-700 FMC rating family
 `R24K`/`R22K`/`R20K`, and accepts below-sea-level pressure altitude and runways
 longer than the last dispatch-table row by conservatively using the nearest
@@ -35,6 +38,22 @@ the installer updates the marked loader block without overwriting the backup.
 
 The external JBriks calculator is not used after the hooks are installed. The
 public `zibomod` plugin binary remains unchanged.
+
+## Maintenance Toolkit
+
+The release archive includes a schema-3 `package-manifest.json` with one
+optional `tablet-performance-calculator` module. The Toolkit applies both hook
+blocks structurally, installs the three Lua payloads in the same transaction
+and owns the corresponding backups for safe update or removal. The initial
+Toolkit contract targets detected LevelUp 737NG installations; the manual
+installer remains available for the documented stock Zibo 4.05.35 script.
+
+Before letting the Toolkit manage an installation that was patched manually,
+first run `z_Install.py --uninstall` and remove the three
+`B738.tablet_perf_*.lua` files. This one-time clean transition lets the Toolkit
+capture the real pre-installation state instead of inheriting an unmanaged
+backup. Updating one manually installed release to another still uses the
+normal idempotent `z_Install.py` workflow.
 
 ## Deliberate `.35` runway limitation
 
@@ -88,11 +107,16 @@ the installer refuses an unknown script layout instead of guessing anchors.
 
 ## Verification included in the source package
 
-- `python3 tools/generate_lua_data.py --check`
+- `python3 tools/update_package.py --check`
+- `python3 -m unittest discover -s tests -p 'test_*.py'`
 - `lua tests/test_core.lua`
 - `lua tests/test_adapter.lua`
 - `python3 tests/test_installer.py`
 - `luac -p` over all package Lua files
+
+The performance-data regeneration step is maintainer-only because its inputs
+belong to the private C++ source checkout. Set `ZIBO_MOD_SOURCE_ROOT` to that
+checkout before running `python3 tools/generate_lua_data.py --check`.
 
 The automated tests cover all six takeoff variant modes across dry/wet,
 representative altitudes and all five takeoff flap settings; all five landing
@@ -109,7 +133,11 @@ LF and CRLF files. Simulator runtime remains a separate validation layer.
 - `B738.tablet_perf_data.lua`: generated compact performance data.
 - `B738.tablet_perf_adapter.lua`: `.35` Tablet state/UI integration.
 - `tools/generate_lua_data.py`: deterministic data generator/freshness check.
+- `tools/update_package.py`: deterministic Toolkit metadata and release-archive
+  generator.
 - `SOURCE.md`: source-of-truth and derivation notes.
 - `package-manifest.txt`: hashes, sizes, target and hook metadata.
+- `package-manifest.json`: Maintenance Toolkit schema-3 package contract.
+- `modules/tablet-performance-calculator/`: Toolkit patch and raw Lua payloads.
 
 This patch is unofficial and is not supported by Zibo or LevelUp.

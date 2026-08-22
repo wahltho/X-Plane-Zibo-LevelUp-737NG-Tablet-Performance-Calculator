@@ -1,8 +1,9 @@
 # Source and derivation notes
 
-The Lua calculator is generated from, and behaviorally follows, the active
-variant-specific C++ calculator in this repository. The C++ implementation and
-its generated datasets are the source of truth for this patch package:
+The checked-in Lua calculator is generated from, and behaviorally follows, the
+maintainer's active variant-specific C++ calculator. The C++ implementation and
+its generated datasets are the upstream source of truth for the generated Lua
+data:
 
 - `zibomod/takeoff_perf/fcom_performance.inc`
 - `zibomod/takeoff_perf/generated/takeoff_tables.inc`
@@ -11,9 +12,11 @@ its generated datasets are the source of truth for this patch package:
 - the variant-specific VREF tables in `zibomod/calc.inc`
 
 `tools/generate_lua_data.py` mechanically groups and encodes the generated C++
-rows into `B738.tablet_perf_data.lua`. It records SHA-256 hashes of both input
-table files in the generated header. `--check` verifies that the Lua copy is
-current. The common generated dataset includes exact 737-700 24K/22K/20K
+rows into `B738.tablet_perf_data.lua`. Set `ZIBO_MOD_SOURCE_ROOT` to the
+maintainer source checkout when running it from this repository. The generator
+records SHA-256 hashes of both input table files in the generated header;
+`--check` verifies that the checked-in Lua copy is current. The common generated
+dataset includes exact 737-700 24K/22K/20K
 rating-specific speeds, trim, N1 and assumed-temperature rows. Its 22K/20K
 field and climb limits retain the 737-700/7B24 airframe anchor and use the
 generator's integrated rating-transfer surfaces. The public patch additionally emits the 900ER/SFP 24K and 22K rating

@@ -1,18 +1,24 @@
 schema|package-manifest|1
 package|id|x-plane-zibo-40535-tablet-performance-calculator
-package|version|v0.1.3
-package|release_tag|v0.1.3
+package|version|v0.1.4
+package|release_tag|v0.1.4
 aircraft|family|zibo_levelup_737ng
 target|relative_path|plugins/xlua/scripts/B738.tablet/B738.tablet.lua
-target|baseline|Zibo 4.05.35
+target|baseline|Zibo 4.05.35 / LevelUp V2.S1.50
 payload|data|B738.tablet_perf_data.lua|size|6238626|sha256|948fe226b5dc488526e096197157fb68566bdd96f6cf357496ca598b2b957527
 payload|core|B738.tablet_perf_core.lua|size|27176|sha256|fe99e266b2290652890598d21d06a8b468239cef70cea63c74e89c48959cd8d7
 payload|adapter|B738.tablet_perf_adapter.lua|size|21907|sha256|8314e09c1b1b422dfac86d3f3bb08ecb3d2428fde96a6726d5b4029e29c33741
 payload|dofile|Add_dofile.txt|size|121|sha256|f9beddfb3c18dad50737ba51984b33827082831a8b3f15577b7abba594470942
 payload|hooks|Add_perf_hooks.txt|size|117|sha256|c749c64892a76bac348614610200d3aa9e7da3a6c652f9accc8465edb44a359d
 payload|installer|z_Install.py|size|8229|sha256|8cdcd059ac40f9f604bc0a38e3f5930a2140f300bef2e94cf457482829d1a0c8
-payload|readme|README.md|size|5283|sha256|a96316fa51d2e6485b06002ffb5f937164c92bd2bbfe938da652ebef37ed24c9
-payload|source|SOURCE.md|size|2487|sha256|227e88c7ac88460b51c06de7c90789ea51ae711e3dd7f81cc4953f0c6f0207ce
+payload|readme|README.md|size|6907|sha256|637f94e8d627a23bd8591d5441f03b4c8f4f08c557ff8863a5eae4503031e1db
+payload|source|SOURCE.md|size|2626|sha256|77d91b95a929d3f724eaee9f70cde8131aac841ae8dad17496c08e305a1d53de
+payload|license|LICENSE|size|1292|sha256|4a7e51e23c4f77325daab4a852ad7370518538dc4e3c0e516534393c2adbd26f
+payload|toolkit_manifest|package-manifest.json|size|2803|sha256|addad26d03764011eaa1252bf2e13a5e6e68d9003a36b8e934948f078c7efeeb
+payload|toolkit_payload|modules/tablet-performance-calculator/B738.tablet.lua.json|size|828|sha256|acc504964bb8cdd8f59bc2db3ebaf342189c529a9b0cb2f7037428b2af531274
+payload|toolkit_payload|modules/tablet-performance-calculator/B738.tablet_perf_adapter.lua|size|21907|sha256|8314e09c1b1b422dfac86d3f3bb08ecb3d2428fde96a6726d5b4029e29c33741
+payload|toolkit_payload|modules/tablet-performance-calculator/B738.tablet_perf_core.lua|size|27176|sha256|fe99e266b2290652890598d21d06a8b468239cef70cea63c74e89c48959cd8d7
+payload|toolkit_payload|modules/tablet-performance-calculator/B738.tablet_perf_data.lua|size|6238626|sha256|948fe226b5dc488526e096197157fb68566bdd96f6cf357496ca598b2b957527
 anchor|dofile|jit.off()
 anchor|hooks|function page_app_rating()
 marker|dofile|begin|-- BEGIN UPSTREAM_TABLET_PERF_CALC DOFILE
