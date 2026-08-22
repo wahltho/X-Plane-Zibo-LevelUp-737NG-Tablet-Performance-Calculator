@@ -1,0 +1,27 @@
+schema|package-manifest|1
+package|id|x-plane-zibo-40535-tablet-performance-calculator
+package|version|v0.1.3
+package|release_tag|v0.1.3
+aircraft|family|zibo_levelup_737ng
+target|relative_path|plugins/xlua/scripts/B738.tablet/B738.tablet.lua
+target|baseline|Zibo 4.05.35
+payload|data|B738.tablet_perf_data.lua|size|6238626|sha256|948fe226b5dc488526e096197157fb68566bdd96f6cf357496ca598b2b957527
+payload|core|B738.tablet_perf_core.lua|size|27176|sha256|fe99e266b2290652890598d21d06a8b468239cef70cea63c74e89c48959cd8d7
+payload|adapter|B738.tablet_perf_adapter.lua|size|21907|sha256|8314e09c1b1b422dfac86d3f3bb08ecb3d2428fde96a6726d5b4029e29c33741
+payload|dofile|Add_dofile.txt|size|121|sha256|f9beddfb3c18dad50737ba51984b33827082831a8b3f15577b7abba594470942
+payload|hooks|Add_perf_hooks.txt|size|117|sha256|c749c64892a76bac348614610200d3aa9e7da3a6c652f9accc8465edb44a359d
+payload|installer|z_Install.py|size|8229|sha256|8cdcd059ac40f9f604bc0a38e3f5930a2140f300bef2e94cf457482829d1a0c8
+payload|readme|README.md|size|5283|sha256|a96316fa51d2e6485b06002ffb5f937164c92bd2bbfe938da652ebef37ed24c9
+payload|source|SOURCE.md|size|2487|sha256|227e88c7ac88460b51c06de7c90789ea51ae711e3dd7f81cc4953f0c6f0207ce
+anchor|dofile|jit.off()
+anchor|hooks|function page_app_rating()
+marker|dofile|begin|-- BEGIN UPSTREAM_TABLET_PERF_CALC DOFILE
+marker|dofile|end|-- END UPSTREAM_TABLET_PERF_CALC DOFILE
+marker|hooks|begin|-- BEGIN UPSTREAM_TABLET_PERF_CALC HOOKS
+marker|hooks|end|-- END UPSTREAM_TABLET_PERF_CALC HOOKS
+source|takeoff_sha256|1337937106ebd4f5704887c8cba67c84332f9f0c6e1773490ff337ed1f4263d0
+source|landing_sha256|f64542a0e908b2745428a61180245370b447a88a01185fc0a616ba346d833d56
+dependency|external_jbriks_runtime|none
+dependency|public_zibomod_plugin_change|none
+runway|intersection_support|full_only
+hash_binding|upstream_b738_tablet_lua|none
