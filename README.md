@@ -5,7 +5,7 @@ takeoff and landing results locally in XLua. It targets the stock Zibo
 4.05.35 `B738.tablet` script and also follows the LevelUp variant selector used
 by the shared Zibo plugin.
 
-Release `v0.1.4` adds a manifest-driven package for the X-Plane 737NG
+Release `v0.1.5` adds an interoperable manifest-driven package for the X-Plane 737NG
 Maintenance Toolkit without changing the calculation runtime. The same release
 archive continues to support the stand-alone `z_Install.py` workflow. Release
 `v0.1.3` resolves legacy `73x`/Ultimate aircraft IDs when the shared

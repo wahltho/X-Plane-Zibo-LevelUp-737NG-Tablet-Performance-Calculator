@@ -1,0 +1,13 @@
+{
+  "anchorLines": [
+    "jit.off()"
+  ],
+  "beginMarker": "-- BEGIN UPSTREAM_TABLET_PERF_CALC DOFILE",
+  "contentLines": [
+    "dofile(\"B738.tablet_perf_adapter.lua\")"
+  ],
+  "endMarker": "-- END UPSTREAM_TABLET_PERF_CALC DOFILE",
+  "format": "insert-marked-block-v1",
+  "name": "Tablet performance calculator loader",
+  "position": "after"
+}

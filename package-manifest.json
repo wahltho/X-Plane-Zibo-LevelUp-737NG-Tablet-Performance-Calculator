@@ -10,9 +10,14 @@
       "moduleId": "tablet-performance-calculator",
       "payloads": [
         {
-          "path": "B738.tablet.lua.json",
-          "sha256": "acc504964bb8cdd8f59bc2db3ebaf342189c529a9b0cb2f7037428b2af531274",
-          "size": 828
+          "path": "B738.tablet.loader.json",
+          "sha256": "39d5ae465530d6a27498a2c01bee95e9376dbbcbbcb200cede5c1a24e28eb89e",
+          "size": 346
+        },
+        {
+          "path": "B738.tablet.hooks.json",
+          "sha256": "0e709b2f58db18a19373e89294dc509bb9bf2deedd0d4a9a8870d110faba1981",
+          "size": 470
         },
         {
           "path": "B738.tablet_perf_data.lua",
@@ -34,8 +39,14 @@
       "requires": [],
       "targets": [
         {
+          "operation": "insert-marked-block-v1",
+          "payload": "B738.tablet.loader.json",
+          "relativePath": "plugins/xlua/scripts/B738.tablet/B738.tablet.lua",
+          "sourceSha256": []
+        },
+        {
           "operation": "exact-text-replacements-v1",
-          "payload": "B738.tablet.lua.json",
+          "payload": "B738.tablet.hooks.json",
           "relativePath": "plugins/xlua/scripts/B738.tablet/B738.tablet.lua",
           "sourceSha256": []
         },
@@ -65,7 +76,7 @@
   ],
   "packageId": "x-plane-zibo-40535-tablet-performance-calculator",
   "packageType": "compatibilityPackage",
-  "packageVersion": "0.1.4",
+  "packageVersion": "0.1.5",
   "repositoryUrl": "https://github.com/wahltho/X-Plane-Zibo-LevelUp-737NG-Tablet-Performance-Calculator",
   "restartRequired": true,
   "schemaVersion": 3,

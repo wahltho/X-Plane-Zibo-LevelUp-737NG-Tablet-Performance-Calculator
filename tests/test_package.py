@@ -58,6 +58,31 @@ def apply_exact_replacements(source: bytes, payload: dict[str, object]) -> bytes
     return result.encode("utf-8")
 
 
+def apply_marked_insertion(source: bytes, payload: dict[str, object]) -> bytes:
+    eol = "\r\n" if source.count(b"\r\n") > source.count(b"\n") - source.count(b"\r\n") else "\n"
+    final_eol = source.endswith((b"\r", b"\n"))
+    lines = source.decode("utf-8").replace("\r\n", "\n").replace("\r", "\n").split("\n")
+    if final_eol and lines[-1] == "":
+        lines.pop()
+    block = [payload["beginMarker"], *payload["contentLines"], payload["endMarker"]]
+    block_matches = find_sequence(lines, block)
+    if len(block_matches) == 1:
+        return source
+    if block_matches:
+        raise AssertionError("marked loader block is duplicated")
+    if payload["beginMarker"] in lines or payload["endMarker"] in lines:
+        raise AssertionError("marked loader block is partial or modified")
+    anchors = find_sequence(lines, payload["anchorLines"])
+    if len(anchors) != 1:
+        raise AssertionError(f"loader anchor matches={len(anchors)}")
+    index = anchors[0]
+    lines[index:index] = block
+    result = eol.join(lines)
+    if final_eol:
+        result += eol
+    return result.encode("utf-8")
+
+
 class PackageTests(unittest.TestCase):
     def test_generated_package_files_are_current(self) -> None:
         completed = subprocess.run(
@@ -92,15 +117,21 @@ class PackageTests(unittest.TestCase):
 
     @unittest.skipUnless(BASELINE.is_file(), "set B738_TABLET_BASELINE to the stock tablet Lua")
     def test_structural_patch_handles_levelup_crlf_and_zibo_lf(self) -> None:
-        payload = json.loads(
-            (ROOT / "modules" / MODULE_ID / "B738.tablet.lua.json").read_text(encoding="utf-8")
+        loader = json.loads(
+            (ROOT / "modules" / MODULE_ID / "B738.tablet.loader.json").read_text(encoding="utf-8")
+        )
+        hooks = json.loads(
+            (ROOT / "modules" / MODULE_ID / "B738.tablet.hooks.json").read_text(encoding="utf-8")
         )
         crlf = BASELINE.read_bytes().replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")
         for source in (crlf, crlf.replace(b"\r\n", b"\n")):
-            installed = apply_exact_replacements(source, payload)
+            installed = apply_exact_replacements(apply_marked_insertion(source, loader), hooks)
             self.assertEqual(1, installed.count(b"BEGIN UPSTREAM_TABLET_PERF_CALC DOFILE"))
             self.assertEqual(1, installed.count(b"BEGIN UPSTREAM_TABLET_PERF_CALC HOOKS"))
-            self.assertEqual(installed, apply_exact_replacements(installed, payload))
+            self.assertEqual(
+                installed,
+                apply_exact_replacements(apply_marked_insertion(installed, loader), hooks),
+            )
             if b"\r\n" in source:
                 self.assertEqual(installed.count(b"\n"), installed.count(b"\r\n"))
 
@@ -126,7 +157,7 @@ class PackageTests(unittest.TestCase):
                     names,
                 )
                 manifest = json.loads(package.read("package-manifest.json"))
-                self.assertEqual("0.1.4", manifest["packageVersion"])
+                self.assertEqual("0.1.5", manifest["packageVersion"])
 
 
 if __name__ == "__main__":

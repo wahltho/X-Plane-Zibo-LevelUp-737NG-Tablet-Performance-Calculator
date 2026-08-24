@@ -13,7 +13,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "0.1.4"
+VERSION = "0.1.5"
 RELEASE_TAG = f"v{VERSION}"
 PACKAGE_ID = "x-plane-zibo-40535-tablet-performance-calculator"
 REPOSITORY_URL = (
@@ -22,7 +22,8 @@ REPOSITORY_URL = (
 )
 MODULE_ID = "tablet-performance-calculator"
 MODULE_ROOT = ROOT / "modules" / MODULE_ID
-PATCH_NAME = "B738.tablet.lua.json"
+LOADER_PATCH_NAME = "B738.tablet.loader.json"
+HOOKS_PATCH_NAME = "B738.tablet.hooks.json"
 RUNTIME_FILES = (
     "B738.tablet_perf_data.lua",
     "B738.tablet_perf_core.lua",
@@ -53,15 +54,23 @@ def fragment(name: str) -> list[str]:
     return (ROOT / name).read_text(encoding="utf-8").splitlines()
 
 
-def make_tablet_patch() -> dict[str, object]:
+def make_tablet_loader_patch() -> dict[str, object]:
+    fragment_lines = fragment("Add_dofile.txt")
+    return {
+        "format": "insert-marked-block-v1",
+        "name": "Tablet performance calculator loader",
+        "beginMarker": fragment_lines[0],
+        "endMarker": fragment_lines[-1],
+        "contentLines": fragment_lines[1:-1],
+        "anchorLines": ["jit.off()"],
+        "position": "after",
+    }
+
+
+def make_tablet_hooks_patch() -> dict[str, object]:
     return {
         "format": "exact-text-replacements-v1",
         "replacements": [
-            {
-                "name": "Tablet performance calculator loader",
-                "oldLines": ["jit.off()", "-- --[["],
-                "newLines": ["jit.off()", *fragment("Add_dofile.txt"), "-- --[["],
-            },
             {
                 "name": "Tablet performance calculator hooks",
                 "oldLines": ["end", "", "function page_app_rating()"],
@@ -77,13 +86,21 @@ def make_tablet_patch() -> dict[str, object]:
 
 
 def make_toolkit_files() -> dict[Path, bytes]:
-    patch_relative = Path("modules") / MODULE_ID / PATCH_NAME
-    files: dict[Path, bytes] = {patch_relative: json_bytes(make_tablet_patch())}
+    loader_relative = Path("modules") / MODULE_ID / LOADER_PATCH_NAME
+    hooks_relative = Path("modules") / MODULE_ID / HOOKS_PATCH_NAME
+    files: dict[Path, bytes] = {
+        loader_relative: json_bytes(make_tablet_loader_patch()),
+        hooks_relative: json_bytes(make_tablet_hooks_patch()),
+    }
     for name in RUNTIME_FILES:
         files[Path("modules") / MODULE_ID / name] = (ROOT / name).read_bytes()
 
     payloads = []
-    for relative in (patch_relative, *(Path("modules") / MODULE_ID / name for name in RUNTIME_FILES)):
+    for relative in (
+        loader_relative,
+        hooks_relative,
+        *(Path("modules") / MODULE_ID / name for name in RUNTIME_FILES),
+    ):
         module_relative = relative.relative_to(Path("modules") / MODULE_ID)
         data = files[relative]
         payloads.append(
@@ -92,8 +109,14 @@ def make_toolkit_files() -> dict[Path, bytes]:
 
     targets: list[dict[str, object]] = [
         {
+            "operation": "insert-marked-block-v1",
+            "payload": LOADER_PATCH_NAME,
+            "relativePath": "plugins/xlua/scripts/B738.tablet/B738.tablet.lua",
+            "sourceSha256": [],
+        },
+        {
             "operation": "exact-text-replacements-v1",
-            "payload": PATCH_NAME,
+            "payload": HOOKS_PATCH_NAME,
             "relativePath": "plugins/xlua/scripts/B738.tablet/B738.tablet.lua",
             "sourceSha256": [],
         }

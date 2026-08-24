@@ -52,7 +52,7 @@ def exercise(line_ending: bytes) -> None:
         target.write_bytes(original)
 
         first_run = run_installer(folder)
-        assert "Package v0.1.4 payload verified; installation complete." in first_run.stdout
+        assert "Package v0.1.5 payload verified; installation complete." in first_run.stdout
         installed = target.read_bytes()
         assert (folder / "B738.tablet.lua.backup").read_bytes() == original
         assert installed.count(b"BEGIN UPSTREAM_TABLET_PERF_CALC DOFILE") == 1
@@ -64,7 +64,7 @@ def exercise(line_ending: bytes) -> None:
 
         first_hash = digest(installed)
         second_run = run_installer(folder)
-        assert "Package v0.1.4 payload verified." in second_run.stdout
+        assert "Package v0.1.5 payload verified." in second_run.stdout
         assert "Tablet hooks already installed and current; installation complete." in second_run.stdout
         assert digest(target.read_bytes()) == first_hash
         assert (folder / "B738.tablet.lua.backup").read_bytes() == original
@@ -126,10 +126,33 @@ def exercise_mixed_package_refusal() -> None:
             payload.write(b"-- stale or damaged payload\n")
 
         completed = run_installer(folder, expect=2)
-        assert "does not match package v0.1.4" in completed.stderr
+        assert "does not match package v0.1.5" in completed.stderr
         assert "extract the complete package again" in completed.stderr
         assert digest(target.read_bytes()) == original_hash
         assert not (folder / "B738.tablet.lua.backup").exists()
+
+
+def exercise_other_loader_coexistence() -> None:
+    with tempfile.TemporaryDirectory() as temporary:
+        folder = Path(temporary)
+        for name in PAYLOADS:
+            shutil.copy2(PACKAGE / name, folder / name)
+        original = BASELINE.read_text(encoding="utf-8")
+        other = (
+            "-- BEGIN OTHER_PACKAGE DOFILE\n"
+            'dofile("other_package.lua")\n'
+            "-- END OTHER_PACKAGE DOFILE"
+        )
+        original = original.replace("jit.off()", "jit.off()\n" + other, 1)
+        target = folder / "B738.tablet.lua"
+        target.write_text(original, encoding="utf-8", newline="\n")
+
+        run_installer(folder)
+        installed = target.read_text(encoding="utf-8")
+        assert installed.count("BEGIN OTHER_PACKAGE DOFILE") == 1
+        assert installed.count("BEGIN UPSTREAM_TABLET_PERF_CALC DOFILE") == 1
+        run_installer(folder, "--uninstall")
+        assert target.read_text(encoding="utf-8") == original
 
 
 if not BASELINE.is_file():
@@ -140,4 +163,5 @@ exercise(b"\r\n")
 exercise_missing_anchor()
 exercise_v010_upgrade()
 exercise_mixed_package_refusal()
+exercise_other_loader_coexistence()
 print("PASS: installer .35 baseline, LF/CRLF, idempotence, payload verification, v0.1.0 upgrade, uninstall and refusal")
