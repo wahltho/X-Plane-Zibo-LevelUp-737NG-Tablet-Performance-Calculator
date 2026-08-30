@@ -76,7 +76,7 @@
   ],
   "packageId": "x-plane-zibo-40535-tablet-performance-calculator",
   "packageType": "compatibilityPackage",
-  "packageVersion": "0.1.5",
+  "packageVersion": "0.1.6",
   "repositoryUrl": "https://github.com/wahltho/X-Plane-Zibo-LevelUp-737NG-Tablet-Performance-Calculator",
   "restartRequired": true,
   "schemaVersion": 3,

@@ -13,7 +13,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "0.1.5"
+VERSION = "0.1.6"
 RELEASE_TAG = f"v{VERSION}"
 PACKAGE_ID = "x-plane-zibo-40535-tablet-performance-calculator"
 REPOSITORY_URL = (

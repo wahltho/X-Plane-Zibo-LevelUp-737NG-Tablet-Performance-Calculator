@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import re
 import shutil
 import subprocess
 import sys
@@ -166,17 +167,54 @@ def remove_block(lines: list[str], begin: str, end: str) -> bool:
     return True
 
 
-def validate_lua(payload: bytes) -> None:
-    compiler = shutil.which("luac")
-    if compiler is None:
-        print("Lua syntax check skipped: luac not found.")
-        return
-    with tempfile.NamedTemporaryFile(suffix=".lua") as temporary:
-        temporary.write(payload)
-        temporary.flush()
-        completed = subprocess.run(
-            [compiler, "-p", temporary.name], capture_output=True, text=True, check=False
+def find_lua51_compiler() -> str | None:
+    incompatible: list[str] = []
+    seen: set[str] = set()
+    for command in ("luac5.1", "luac-5.1", "luac"):
+        compiler = shutil.which(command)
+        if compiler is None or compiler in seen:
+            continue
+        seen.add(compiler)
+        version = subprocess.run(
+            [compiler, "-v"], capture_output=True, text=True, check=False
         )
+        banner = " ".join(part.strip() for part in (version.stdout, version.stderr) if part.strip())
+        if version.returncode == 0 and re.search(r"\bLua\s+5\.1(?:\.\d+)?\b", banner):
+            return compiler
+        incompatible.append(f"{compiler} ({banner or 'unknown version'})")
+
+    if incompatible:
+        print(
+            "Lua syntax check skipped: available luac is not Lua 5.1 compatible: "
+            + ", ".join(incompatible)
+            + ". X-Plane XLua uses LuaJIT/Lua 5.1 semantics."
+        )
+    else:
+        print("Lua syntax check skipped: Lua 5.1-compatible luac not found.")
+    return None
+
+
+def validate_lua(payload: bytes) -> None:
+    compiler = find_lua51_compiler()
+    if compiler is None:
+        return
+    temporary_path: Path | None = None
+    try:
+        # Windows prevents luac.exe from reopening a NamedTemporaryFile while
+        # Python still owns its default exclusive handle.
+        with tempfile.NamedTemporaryFile(suffix=".lua", delete=False) as temporary:
+            temporary_path = Path(temporary.name)
+            temporary.write(payload)
+            temporary.flush()
+        completed = subprocess.run(
+            [compiler, "-p", str(temporary_path)], capture_output=True, text=True, check=False
+        )
+    finally:
+        if temporary_path is not None:
+            try:
+                temporary_path.unlink()
+            except FileNotFoundError:
+                pass
     if completed.returncode != 0:
         message = completed.stderr.strip() or completed.stdout.strip()
         print(f"ERROR: modified B738.tablet.lua failed luac: {message}", file=sys.stderr)

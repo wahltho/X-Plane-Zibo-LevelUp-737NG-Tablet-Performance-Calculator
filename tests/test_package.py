@@ -157,7 +157,7 @@ class PackageTests(unittest.TestCase):
                     names,
                 )
                 manifest = json.loads(package.read("package-manifest.json"))
-                self.assertEqual("0.1.5", manifest["packageVersion"])
+                self.assertEqual("0.1.6", manifest["packageVersion"])
 
 
 if __name__ == "__main__":

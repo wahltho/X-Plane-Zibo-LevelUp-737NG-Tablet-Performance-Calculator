@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import os
 import shutil
 import subprocess
@@ -10,6 +11,11 @@ from pathlib import Path
 
 
 PACKAGE = Path(__file__).resolve().parents[1]
+INSTALLER_PATH = PACKAGE / "z_Install.py"
+INSTALLER_SPEC = importlib.util.spec_from_file_location("tablet_perf_installer", INSTALLER_PATH)
+assert INSTALLER_SPEC is not None and INSTALLER_SPEC.loader is not None
+installer = importlib.util.module_from_spec(INSTALLER_SPEC)
+INSTALLER_SPEC.loader.exec_module(installer)
 DEFAULT_BASELINE = Path(
     "/Users/wahltho/dev/Zibo Mod/Original/Zibo Mod Original/"
     "B738X_XP12_4_05_35/plugins/xlua/scripts/B738.tablet/B738.tablet.lua"
@@ -52,7 +58,7 @@ def exercise(line_ending: bytes) -> None:
         target.write_bytes(original)
 
         first_run = run_installer(folder)
-        assert "Package v0.1.5 payload verified; installation complete." in first_run.stdout
+        assert "Package v0.1.6 payload verified; installation complete." in first_run.stdout
         installed = target.read_bytes()
         assert (folder / "B738.tablet.lua.backup").read_bytes() == original
         assert installed.count(b"BEGIN UPSTREAM_TABLET_PERF_CALC DOFILE") == 1
@@ -64,7 +70,7 @@ def exercise(line_ending: bytes) -> None:
 
         first_hash = digest(installed)
         second_run = run_installer(folder)
-        assert "Package v0.1.5 payload verified." in second_run.stdout
+        assert "Package v0.1.6 payload verified." in second_run.stdout
         assert "Tablet hooks already installed and current; installation complete." in second_run.stdout
         assert digest(target.read_bytes()) == first_hash
         assert (folder / "B738.tablet.lua.backup").read_bytes() == original
@@ -126,7 +132,7 @@ def exercise_mixed_package_refusal() -> None:
             payload.write(b"-- stale or damaged payload\n")
 
         completed = run_installer(folder, expect=2)
-        assert "does not match package v0.1.5" in completed.stderr
+        assert "does not match package v0.1.6" in completed.stderr
         assert "extract the complete package again" in completed.stderr
         assert digest(target.read_bytes()) == original_hash
         assert not (folder / "B738.tablet.lua.backup").exists()
@@ -155,6 +161,91 @@ def exercise_other_loader_coexistence() -> None:
         assert target.read_text(encoding="utf-8") == original
 
 
+def exercise_incompatible_luac_is_not_used() -> None:
+    calls: list[list[str]] = []
+
+    def run_luac(arguments: list[str], **_: object) -> subprocess.CompletedProcess[str]:
+        calls.append(arguments)
+        assert arguments == ["/usr/bin/luac", "-v"]
+        return subprocess.CompletedProcess(arguments, 0, "Lua 5.4.8", "")
+
+    original_which = installer.shutil.which
+    original_named_temporary_file = installer.tempfile.NamedTemporaryFile
+    original_run = installer.subprocess.run
+    try:
+        installer.shutil.which = lambda command: "/usr/bin/luac" if command == "luac" else None
+        installer.tempfile.NamedTemporaryFile = lambda **_: (_ for _ in ()).throw(
+            AssertionError("Lua 5.4 must be rejected before creating a temporary file")
+        )
+        installer.subprocess.run = run_luac
+        installer.validate_lua(b"this payload must not be passed to Lua 5.4")
+        assert calls == [["/usr/bin/luac", "-v"]]
+    finally:
+        installer.shutil.which = original_which
+        installer.tempfile.NamedTemporaryFile = original_named_temporary_file
+        installer.subprocess.run = original_run
+
+
+def exercise_windows_luac_temporary_file_contract() -> None:
+    payload = b"function flight_start()\nend\n"
+    fake_path = Path(tempfile.mkdtemp()) / "windows-locked.lua"
+
+    class WindowsLockedTemporary:
+        def __init__(self) -> None:
+            self.name = str(fake_path)
+            self.stream = fake_path.open("wb")
+            self.closed = False
+
+        def __enter__(self) -> "WindowsLockedTemporary":
+            return self
+
+        def write(self, data: bytes) -> int:
+            return self.stream.write(data)
+
+        def flush(self) -> None:
+            self.stream.flush()
+
+        def __exit__(self, *_: object) -> None:
+            self.stream.close()
+            self.closed = True
+
+    temporary: WindowsLockedTemporary | None = None
+
+    def named_temporary_file(*, suffix: str, delete: bool) -> WindowsLockedTemporary:
+        nonlocal temporary
+        assert suffix == ".lua"
+        assert delete is False
+        temporary = WindowsLockedTemporary()
+        return temporary
+
+    def run_luac(arguments: list[str], **_: object) -> subprocess.CompletedProcess[str]:
+        if arguments == ["C:/Lua/luac.exe", "-v"]:
+            return subprocess.CompletedProcess(arguments, 0, "Lua 5.1.5", "")
+        assert temporary is not None and temporary.closed
+        assert arguments == ["C:/Lua/luac.exe", "-p", str(fake_path)]
+        assert fake_path.read_bytes() == payload
+        return subprocess.CompletedProcess(arguments, 0, "", "")
+
+    original_which = installer.shutil.which
+    original_named_temporary_file = installer.tempfile.NamedTemporaryFile
+    original_run = installer.subprocess.run
+    try:
+        installer.shutil.which = lambda command: "C:/Lua/luac.exe" if command == "luac" else None
+        installer.tempfile.NamedTemporaryFile = named_temporary_file
+        installer.subprocess.run = run_luac
+        installer.validate_lua(payload)
+        assert not fake_path.exists()
+    finally:
+        installer.shutil.which = original_which
+        installer.tempfile.NamedTemporaryFile = original_named_temporary_file
+        installer.subprocess.run = original_run
+        if fake_path.exists():
+            fake_path.unlink()
+        fake_path.parent.rmdir()
+
+
+exercise_windows_luac_temporary_file_contract()
+exercise_incompatible_luac_is_not_used()
 if not BASELINE.is_file():
     print(f"SKIP: set B738_TABLET_BASELINE to a stock Zibo 4.05.35/LevelUp tablet Lua: {BASELINE}")
     raise SystemExit(0)
@@ -164,4 +255,4 @@ exercise_missing_anchor()
 exercise_v010_upgrade()
 exercise_mixed_package_refusal()
 exercise_other_loader_coexistence()
-print("PASS: installer .35 baseline, LF/CRLF, idempotence, payload verification, v0.1.0 upgrade, uninstall and refusal")
+print("PASS: Lua 5.1 compiler selection, installer .35 baseline, LF/CRLF, idempotence, payload verification, v0.1.0 upgrade, uninstall and refusal")

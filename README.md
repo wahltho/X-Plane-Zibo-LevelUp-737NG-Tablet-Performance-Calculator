@@ -5,7 +5,13 @@ takeoff and landing results locally in XLua. It targets the stock Zibo
 4.05.35 `B738.tablet` script and also follows the LevelUp variant selector used
 by the shared Zibo plugin.
 
-Release `v0.1.5` adds an interoperable manifest-driven package for the X-Plane 737NG
+Release `v0.1.6` prevents false stand-alone installer failures by restricting
+the optional whole-file syntax check to a Lua 5.1-compatible compiler, matching
+X-Plane XLua/LuaJIT semantics. Lua 5.2 through 5.4 system compilers are skipped;
+the temporary source is also closed before invoking `luac.exe` on Windows. The
+installer still validates package hashes and structural anchors normally. No
+calculator runtime or hook changed. Release `v0.1.5` added an interoperable
+manifest-driven package for the X-Plane 737NG
 Maintenance Toolkit without changing the calculation runtime. The same release
 archive continues to support the stand-alone `z_Install.py` workflow. Release
 `v0.1.3` resolves legacy `73x`/Ultimate aircraft IDs when the shared
@@ -83,8 +89,9 @@ python3 z_Install.py
 ```
 
 On Windows use `py z_Install.py` or `python z_Install.py` if necessary. The
-installer preserves LF/CRLF line endings, syntax-checks the result when `luac`
-is available, and creates `B738.tablet.lua.backup` once without overwriting it.
+installer preserves LF/CRLF line endings, syntax-checks the result when a Lua
+5.1-compatible `luac` is available, and creates `B738.tablet.lua.backup` once
+without overwriting it.
 It also verifies the package version, sizes and SHA-256 hashes of all required
 runtime files. Re-running it is safe and reports separately whether the
 payload is verified and whether the marked hooks were already current.
