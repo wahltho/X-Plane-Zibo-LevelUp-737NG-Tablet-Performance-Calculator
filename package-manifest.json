@@ -1,5 +1,5 @@
 {
-  "aircraftFamily": "LevelUp 737NG Series v2 for X-Plane 12",
+  "aircraftFamily": "Zibo Mod / LevelUp 737NG for X-Plane 12",
   "modules": [
     {
       "conflictsWith": [],
@@ -76,11 +76,12 @@
   ],
   "packageId": "x-plane-zibo-40535-tablet-performance-calculator",
   "packageType": "compatibilityPackage",
-  "packageVersion": "0.1.6",
+  "packageVersion": "0.1.7",
   "repositoryUrl": "https://github.com/wahltho/X-Plane-Zibo-LevelUp-737NG-Tablet-Performance-Calculator",
   "restartRequired": true,
   "schemaVersion": 3,
   "supportedProducts": [
+    "zibo-737ng",
     "levelup-737ng"
   ],
   "supportedUpstreamReleases": []

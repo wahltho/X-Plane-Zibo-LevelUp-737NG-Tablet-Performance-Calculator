@@ -5,8 +5,11 @@ takeoff and landing results locally in XLua. It targets the stock Zibo
 4.05.35 `B738.tablet` script and also follows the LevelUp variant selector used
 by the shared Zibo plugin.
 
-Release `v0.1.6` prevents false stand-alone installer failures by restricting
-the optional whole-file syntax check to a Lua 5.1-compatible compiler, matching
+Release `v0.1.7` makes the existing Toolkit package available for compatible
+Zibo installations as well as LevelUp installations. The calculator runtime
+and hooks are unchanged. Release `v0.1.6` prevents false stand-alone installer
+failures by restricting the optional whole-file syntax check to a Lua
+5.1-compatible compiler, matching
 X-Plane XLua/LuaJIT semantics. Lua 5.2 through 5.4 system compilers are skipped;
 the temporary source is also closed before invoking `luac.exe` on Windows. The
 installer still validates package hashes and structural anchors normally. No
@@ -50,9 +53,10 @@ public `zibomod` plugin binary remains unchanged.
 The release archive includes a schema-3 `package-manifest.json` with one
 optional `tablet-performance-calculator` module. The Toolkit applies both hook
 blocks structurally, installs the three Lua payloads in the same transaction
-and owns the corresponding backups for safe update or removal. The initial
-Toolkit contract targets detected LevelUp 737NG installations; the manual
-installer remains available for the documented stock Zibo 4.05.35 script.
+and owns the corresponding backups for safe update or removal. The Toolkit
+contract supports detected Zibo and LevelUp installations when their tablet
+scripts match the declared structural anchors. The stand-alone installer
+remains available for the documented stock Zibo 4.05.35 script.
 
 Before letting the Toolkit manage an installation that was patched manually,
 first run `z_Install.py --uninstall` and remove the three

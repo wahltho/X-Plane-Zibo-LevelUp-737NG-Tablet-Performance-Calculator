@@ -13,7 +13,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VERSION = "0.1.6"
+VERSION = "0.1.7"
 RELEASE_TAG = f"v{VERSION}"
 PACKAGE_ID = "x-plane-zibo-40535-tablet-performance-calculator"
 REPOSITORY_URL = (
@@ -134,7 +134,7 @@ def make_toolkit_files() -> dict[Path, bytes]:
         )
 
     manifest = {
-        "aircraftFamily": "LevelUp 737NG Series v2 for X-Plane 12",
+        "aircraftFamily": "Zibo Mod / LevelUp 737NG for X-Plane 12",
         "modules": [
             {
                 "conflictsWith": [],
@@ -158,7 +158,7 @@ def make_toolkit_files() -> dict[Path, bytes]:
         "repositoryUrl": REPOSITORY_URL,
         "restartRequired": True,
         "schemaVersion": 3,
-        "supportedProducts": ["levelup-737ng"],
+        "supportedProducts": ["zibo-737ng", "levelup-737ng"],
         "supportedUpstreamReleases": [],
     }
     files[Path("package-manifest.json")] = json_bytes(manifest)

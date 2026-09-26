@@ -98,7 +98,7 @@ class PackageTests(unittest.TestCase):
         manifest = json.loads((ROOT / "package-manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(3, manifest["schemaVersion"])
         self.assertEqual("compatibilityPackage", manifest["packageType"])
-        self.assertEqual(["levelup-737ng"], manifest["supportedProducts"])
+        self.assertEqual(["zibo-737ng", "levelup-737ng"], manifest["supportedProducts"])
         self.assertEqual(1, len(manifest["modules"]))
         module = manifest["modules"][0]
         self.assertEqual("optional", module["policy"])
@@ -157,7 +157,7 @@ class PackageTests(unittest.TestCase):
                     names,
                 )
                 manifest = json.loads(package.read("package-manifest.json"))
-                self.assertEqual("0.1.6", manifest["packageVersion"])
+                self.assertEqual("0.1.7", manifest["packageVersion"])
 
 
 if __name__ == "__main__":

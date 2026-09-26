@@ -58,7 +58,7 @@ def exercise(line_ending: bytes) -> None:
         target.write_bytes(original)
 
         first_run = run_installer(folder)
-        assert "Package v0.1.6 payload verified; installation complete." in first_run.stdout
+        assert "Package v0.1.7 payload verified; installation complete." in first_run.stdout
         installed = target.read_bytes()
         assert (folder / "B738.tablet.lua.backup").read_bytes() == original
         assert installed.count(b"BEGIN UPSTREAM_TABLET_PERF_CALC DOFILE") == 1
@@ -70,7 +70,7 @@ def exercise(line_ending: bytes) -> None:
 
         first_hash = digest(installed)
         second_run = run_installer(folder)
-        assert "Package v0.1.6 payload verified." in second_run.stdout
+        assert "Package v0.1.7 payload verified." in second_run.stdout
         assert "Tablet hooks already installed and current; installation complete." in second_run.stdout
         assert digest(target.read_bytes()) == first_hash
         assert (folder / "B738.tablet.lua.backup").read_bytes() == original
@@ -132,7 +132,7 @@ def exercise_mixed_package_refusal() -> None:
             payload.write(b"-- stale or damaged payload\n")
 
         completed = run_installer(folder, expect=2)
-        assert "does not match package v0.1.6" in completed.stderr
+        assert "does not match package v0.1.7" in completed.stderr
         assert "extract the complete package again" in completed.stderr
         assert digest(target.read_bytes()) == original_hash
         assert not (folder / "B738.tablet.lua.backup").exists()
