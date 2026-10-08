@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "policy": {
+    "packageId": "x-plane-zibo-40535-tablet-performance-calculator",
+    "displayName": "Tablet Performance Calculator",
+    "repositoryUrl": "https://github.com/wahltho/X-Plane-Zibo-LevelUp-737NG-Tablet-Performance-Calculator",
+    "supportedProducts": [
+      "zibo-737ng",
+      "levelup-737ng"
+    ],
+    "moduleIds": [
+      "tablet-performance-calculator"
+    ],
+    "targetPaths": [
+      "plugins/xlua/scripts/B738.tablet/B738.tablet.lua",
+      "plugins/xlua/scripts/B738.tablet/B738.tablet_perf_*",
+      "plugins/xlua/scripts/B738.tablet/B738.tablet_perf_adapter.lua",
+      "plugins/xlua/scripts/B738.tablet/B738.tablet_perf_core.lua",
+      "plugins/xlua/scripts/B738.tablet/B738.tablet_perf_data.lua"
+    ],
+    "standaloneEvidencePaths": [
+      ".patch-ownership/x-plane-zibo-40535-tablet-performance-calculator/receipt.json",
+      ".patch-ownership/x-plane-zibo-40535-tablet-performance-calculator.lock",
+      ".patch-ownership/x-plane-zibo-40535-tablet-performance-calculator/transaction"
+    ],
+    "payloadPaths": [
+      "plugins/xlua/scripts/B738.tablet/B738.tablet_perf_*",
+      "plugins/xlua/scripts/B738.tablet/B738.tablet_perf_adapter.lua",
+      "plugins/xlua/scripts/B738.tablet/B738.tablet_perf_core.lua",
+      "plugins/xlua/scripts/B738.tablet/B738.tablet_perf_data.lua"
+    ],
+    "markerNamespaces": [
+      {
+        "relativePath": "plugins/xlua/scripts/B738.tablet/B738.tablet.lua",
+        "namespace": "UPSTREAM_TABLET_PERF_CALC",
+        "blocks": [
+          {
+            "beginMarker": "-- BEGIN UPSTREAM_TABLET_PERF_CALC DOFILE",
+            "endMarker": "-- END UPSTREAM_TABLET_PERF_CALC DOFILE"
+          },
+          {
+            "beginMarker": "-- BEGIN UPSTREAM_TABLET_PERF_CALC HOOKS",
+            "endMarker": "-- END UPSTREAM_TABLET_PERF_CALC HOOKS"
+          }
+        ],
+        "allowedCommentLines": []
+      }
+    ],
+    "signatures": [],
+    "resultFiles": [],
+    "originalFiles": [],
+    "recoveryInstruction": "Before switching to MTK, use the restore or uninstall procedure documented by this patch, preserving other patches. Then rescan. Instructions: https://github.com/wahltho/X-Plane-Zibo-LevelUp-737NG-Tablet-Performance-Calculator#readme."
+  }
+}

@@ -25,9 +25,9 @@ published boundary. It also applies the stock FMC whole-knot rounding contract
 to V1/VR/V2. Release `v0.1.2` makes LevelUp's livery-controlled 737-900ER/SFP takeoff
 configuration use the 900ER dataset and offer its FMC rating family
 `R27K`/`R24K`/`R22K`. Release
-`v0.1.1` fixed adapter registration under XLua 1.3. Users of an earlier release
-can copy the new files over it and rerun `z_Install.py`;
-the installer updates the marked loader block without overwriting the backup.
+`v0.1.1` fixed adapter registration under XLua 1.3. Existing installations made by the receipt-based installer can be updated
+by running it from the complete extracted package. Older installs without a
+receipt must first be removed using their original installer and backups.
 
 ## What it provides
 
@@ -58,12 +58,10 @@ contract supports detected Zibo and LevelUp installations when their tablet
 scripts match the declared structural anchors. The stand-alone installer
 remains available for the documented stock Zibo 4.05.35 script.
 
-Before letting the Toolkit manage an installation that was patched manually,
-first run `z_Install.py --uninstall` and remove the three
-`B738.tablet_perf_*.lua` files. This one-time clean transition lets the Toolkit
-capture the real pre-installation state instead of inheriting an unmanaged
-backup. Updating one manually installed release to another still uses the
-normal idempotent `z_Install.py` workflow.
+Before switching installation methods, remove the patch through its current
+owner. For an older standalone installation without a receipt, use the original
+installer and backups. The new installer and MTK cannot treat already patched
+files as originals merely because their hashes are known.
 
 ## Deliberate `.35` runway limitation
 
@@ -75,46 +73,34 @@ existing departure slope/elevation datarefs and full-runway FMS list are used.
 
 ## Installation
 
-Copy these files into the aircraft folder
-`plugins/xlua/scripts/B738.tablet/`:
+Close X-Plane. Extract the complete package outside the aircraft folder; do
+not copy its Lua files into the aircraft first. From that package folder, run:
 
-- `B738.tablet_perf_data.lua`
-- `B738.tablet_perf_core.lua`
-- `B738.tablet_perf_adapter.lua`
-- `Add_dofile.txt`
-- `Add_perf_hooks.txt`
-- `package-manifest.txt`
-- `z_Install.py`
-
-Run the installer from that folder:
-
-```bash
-python3 z_Install.py
+```text
+python3 z_Install.py --aircraft-root "/path/to/Zibo or LevelUp aircraft"
 ```
 
-On Windows use `py z_Install.py` or `python z_Install.py` if necessary. The
-installer preserves LF/CRLF line endings, syntax-checks the result when a Lua
-5.1-compatible `luac` is available, and creates `B738.tablet.lua.backup` once
-without overwriting it.
-It also verifies the package version, sizes and SHA-256 hashes of all required
-runtime files. Re-running it is safe and reports separately whether the
-payload is verified and whether the marked hooks were already current.
+On Windows use `py -3`. Python 3.10 or newer is required. The installer checks
+package hashes, preserves the script's LF/CRLF convention and checks Lua syntax
+when a Lua 5.1-compatible compiler is available. It saves the original script
+and payload files under its own receipt before making changes.
 
-Manual fallback: insert `Add_dofile.txt` directly after `jit.off()` and insert
-`Add_perf_hooks.txt` directly before `function page_app_rating()`.
+Use the same command for repeat installs and updates. A payload or marked block
+that has changed since the recorded install blocks the operation.
 
 ## Removal and aircraft updates
 
-Remove only this package's hook blocks with:
+Close X-Plane and run from the extracted package:
 
-```bash
-python3 z_Install.py --uninstall
+```text
+python3 z_Install.py --aircraft-root "/path/to/Zibo or LevelUp aircraft" --uninstall
 ```
 
-The three payload Lua files can then be deleted. Alternatively restore the
-installer-created backup. After Zibo or LevelUp replaces `B738.tablet.lua`,
-delete the stale backup and run the installer again against the new script;
-the installer refuses an unknown script layout instead of guessing anchors.
+This removes this package's hooks and restores its three payload files to their
+recorded original state. Other patches in the shared Lua file are retained.
+Uninstall before an aircraft update replaces that script, then install again.
+If the script has already been replaced, keep the receipt and backups and ask
+for help; deleting them would discard the original restore record.
 
 ## Verification included in the source package
 
@@ -152,3 +138,26 @@ LF and CRLF files. Simulator runtime remains a separate validation layer.
 - `modules/tablet-performance-calculator/`: Toolkit patch and raw Lua payloads.
 
 This patch is unofficial and is not supported by Zibo or LevelUp.
+
+## Installation ownership
+
+MTK and the standalone installer remain separate supported installation methods.
+Use the same owner for updates and removal. To switch, uninstall through the
+current owner first, then install through the other. Neither installer adopts
+already patched files on the strength of matching hashes alone.
+
+Keep the complete extracted package, including `standalone_guard.py` and
+`standalone-ownership.json`. The standalone installer checks its recorded
+original backups and stops if MTK owns this patch or a shared target file.
+Unknown, duplicate or incomplete patch blocks and unowned companion files also
+block the operation. Other correctly installed patches are preserved.
+
+A failed operation restores the bytes it changed. If the process is interrupted,
+keep the `.patch-ownership` receipt, transaction journal and lock, together with
+any older patch backup/state directory. Do not delete them to retry. Ask for
+support before changing those files.
+
+Older standalone installs without a complete receipt are not automatically
+migrated. Remove them using the installer and original backups that created
+them. This source change affects installation checks only; runtime payloads and
+patch versions are unchanged. Installer and recovery tests cover these checks.

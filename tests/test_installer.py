@@ -11,6 +11,8 @@ from pathlib import Path
 
 
 PACKAGE = Path(__file__).resolve().parents[1]
+import sys
+sys.path.insert(0, str(PACKAGE))
 INSTALLER_PATH = PACKAGE / "z_Install.py"
 INSTALLER_SPEC = importlib.util.spec_from_file_location("tablet_perf_installer", INSTALLER_PATH)
 assert INSTALLER_SPEC is not None and INSTALLER_SPEC.loader is not None
@@ -38,7 +40,7 @@ def digest(data: bytes) -> str:
 
 def run_installer(folder: Path, *arguments: str, expect: int = 0) -> subprocess.CompletedProcess[str]:
     completed = subprocess.run(
-        ["python3", "z_Install.py", *arguments], cwd=folder, capture_output=True, text=True, check=False
+        ["python3", str(INSTALLER_PATH), "--aircraft-root", str(folder.parents[3].resolve()), *arguments], cwd=folder, capture_output=True, text=True, check=False
     )
     if completed.returncode != expect:
         raise AssertionError(
@@ -48,19 +50,25 @@ def run_installer(folder: Path, *arguments: str, expect: int = 0) -> subprocess.
     return completed
 
 
+def original_backup(folder: Path) -> Path:
+    import json
+    root = folder.parents[3]
+    state = json.loads((root / ".patch-ownership/x-plane-zibo-40535-tablet-performance-calculator/receipt.json").read_text())
+    return root / state["files"]["plugins/xlua/scripts/B738.tablet/B738.tablet.lua"]["backupRelativePath"]
+
+
 def exercise(line_ending: bytes) -> None:
     original = BASELINE.read_bytes().replace(b"\r\n", b"\n").replace(b"\n", line_ending)
     with tempfile.TemporaryDirectory() as temporary:
-        folder = Path(temporary)
-        for name in PAYLOADS:
-            shutil.copy2(PACKAGE / name, folder / name)
+        folder = Path(temporary) / "aircraft/plugins/xlua/scripts/B738.tablet"
+        folder.mkdir(parents=True)
         target = folder / "B738.tablet.lua"
         target.write_bytes(original)
 
         first_run = run_installer(folder)
-        assert "Package v0.1.7 payload verified; installation complete." in first_run.stdout
+        assert "Tablet Performance installed." in first_run.stdout
         installed = target.read_bytes()
-        assert (folder / "B738.tablet.lua.backup").read_bytes() == original
+        assert original_backup(folder).read_bytes() == original
         assert installed.count(b"BEGIN UPSTREAM_TABLET_PERF_CALC DOFILE") == 1
         assert installed.count(b"BEGIN UPSTREAM_TABLET_PERF_CALC HOOKS") == 1
         assert installed.find(b"BEGIN UPSTREAM_TABLET_PERF_CALC DOFILE") > installed.find(b"jit.off()")
@@ -70,22 +78,20 @@ def exercise(line_ending: bytes) -> None:
 
         first_hash = digest(installed)
         second_run = run_installer(folder)
-        assert "Package v0.1.7 payload verified." in second_run.stdout
-        assert "Tablet hooks already installed and current; installation complete." in second_run.stdout
+        assert "Tablet Performance installed." in second_run.stdout
         assert digest(target.read_bytes()) == first_hash
-        assert (folder / "B738.tablet.lua.backup").read_bytes() == original
+        assert original_backup(folder).read_bytes() == original
 
         run_installer(folder, "--uninstall")
         assert target.read_bytes() == original
-        run_installer(folder, "--uninstall")
+        run_installer(folder, "--uninstall", expect=1)
         assert target.read_bytes() == original
 
 
 def exercise_missing_anchor() -> None:
     with tempfile.TemporaryDirectory() as temporary:
-        folder = Path(temporary)
-        for name in PAYLOADS:
-            shutil.copy2(PACKAGE / name, folder / name)
+        folder = Path(temporary) / "aircraft/plugins/xlua/scripts/B738.tablet"
+        folder.mkdir(parents=True)
         text = BASELINE.read_text(encoding="utf-8").replace("function page_app_rating()", "function renamed_page()")
         (folder / "B738.tablet.lua").write_text(text, encoding="utf-8", newline="\n")
         original_hash = digest((folder / "B738.tablet.lua").read_bytes())
@@ -96,9 +102,8 @@ def exercise_missing_anchor() -> None:
 
 def exercise_v010_upgrade() -> None:
     with tempfile.TemporaryDirectory() as temporary:
-        folder = Path(temporary)
-        for name in PAYLOADS:
-            shutil.copy2(PACKAGE / name, folder / name)
+        folder = Path(temporary) / "aircraft/plugins/xlua/scripts/B738.tablet"
+        folder.mkdir(parents=True)
         original = BASELINE.read_text(encoding="utf-8")
         old_dofile = (
             '-- BEGIN UPSTREAM_TABLET_PERF_CALC DOFILE\n'
@@ -113,36 +118,31 @@ def exercise_v010_upgrade() -> None:
         backup_marker = b"original v0.1.0 backup must remain untouched\n"
         (folder / "B738.tablet.lua.backup").write_bytes(backup_marker)
 
-        run_installer(folder)
-        upgraded = target.read_text(encoding="utf-8")
-        assert 'B738_upstream_perf_adapter = dofile(' not in upgraded
-        assert upgraded.count('dofile("B738.tablet_perf_adapter.lua")') == 1
+        before = target.read_bytes()
+        blocked = run_installer(folder, expect=1)
+        assert "no verified standalone owner" in blocked.stderr
+        assert target.read_bytes() == before
         assert (folder / "B738.tablet.lua.backup").read_bytes() == backup_marker
 
 
 def exercise_mixed_package_refusal() -> None:
     with tempfile.TemporaryDirectory() as temporary:
-        folder = Path(temporary)
-        for name in PAYLOADS:
-            shutil.copy2(PACKAGE / name, folder / name)
+        folder = Path(temporary) / "aircraft/plugins/xlua/scripts/B738.tablet"
+        folder.mkdir(parents=True)
         target = folder / "B738.tablet.lua"
         target.write_bytes(BASELINE.read_bytes())
         original_hash = digest(target.read_bytes())
-        with (folder / "B738.tablet_perf_core.lua").open("ab") as payload:
-            payload.write(b"-- stale or damaged payload\n")
-
-        completed = run_installer(folder, expect=2)
-        assert "does not match package v0.1.7" in completed.stderr
-        assert "extract the complete package again" in completed.stderr
+        (folder / "B738.tablet_perf_core.lua").write_bytes(b"-- unowned payload\n")
+        completed = run_installer(folder, expect=1)
+        assert "Unowned companion file" in completed.stderr
         assert digest(target.read_bytes()) == original_hash
         assert not (folder / "B738.tablet.lua.backup").exists()
 
 
 def exercise_other_loader_coexistence() -> None:
     with tempfile.TemporaryDirectory() as temporary:
-        folder = Path(temporary)
-        for name in PAYLOADS:
-            shutil.copy2(PACKAGE / name, folder / name)
+        folder = Path(temporary) / "aircraft/plugins/xlua/scripts/B738.tablet"
+        folder.mkdir(parents=True)
         original = BASELINE.read_text(encoding="utf-8")
         other = (
             "-- BEGIN OTHER_PACKAGE DOFILE\n"
@@ -255,4 +255,4 @@ exercise_missing_anchor()
 exercise_v010_upgrade()
 exercise_mixed_package_refusal()
 exercise_other_loader_coexistence()
-print("PASS: Lua 5.1 compiler selection, installer .35 baseline, LF/CRLF, idempotence, payload verification, v0.1.0 upgrade, uninstall and refusal")
+print("PASS: Lua 5.1 compiler selection, installer .35 baseline, LF/CRLF, idempotence, unowned payload refusal, v0.1.0 refusal, uninstall and coexistence")

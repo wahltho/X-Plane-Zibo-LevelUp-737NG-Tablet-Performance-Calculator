@@ -8,6 +8,7 @@ newline are preserved.  A stock backup is created once and never overwritten.
 from __future__ import annotations
 
 import argparse
+from standalone_guard import Guard, OwnershipError, safe
 import hashlib
 import re
 import shutil
@@ -19,7 +20,8 @@ from pathlib import Path
 
 LUA_FILE = Path("B738.tablet.lua")
 BACKUP_FILE = Path("B738.tablet.lua.backup")
-MANIFEST_FILE = Path("package-manifest.txt")
+PACKAGE_ROOT = Path(__file__).resolve().parent
+MANIFEST_FILE = PACKAGE_ROOT / "package-manifest.txt"
 PACKAGE_ID = "x-plane-zibo-40535-tablet-performance-calculator"
 PAYLOADS = (
     Path("B738.tablet_perf_data.lua"),
@@ -66,7 +68,7 @@ def read_fragment(path: Path) -> list[str]:
 
 def require(path: Path) -> None:
     if not path.is_file():
-        print(f"ERROR: {path} not found; run from the B738.tablet script folder.", file=sys.stderr)
+        print(f"ERROR: {path} not found; extract the complete package to a separate folder.", file=sys.stderr)
         raise SystemExit(2)
 
 
@@ -97,14 +99,15 @@ def verify_package() -> str:
         print(f"ERROR: invalid or incompatible {MANIFEST_FILE}.", file=sys.stderr)
         raise SystemExit(2)
 
-    required_files = (*PAYLOADS, DOFILE_FRAGMENT, HOOK_FRAGMENT, Path("z_Install.py"))
+    required_files = (*PAYLOADS, DOFILE_FRAGMENT, HOOK_FRAGMENT, Path("z_Install.py"), Path("standalone_guard.py"), Path("standalone-ownership.json"))
     for path in required_files:
-        require(path)
+        source = PACKAGE_ROOT / path
+        require(source)
         expected = payloads.get(path.name)
         if expected is None:
             print(f"ERROR: {path.name} is not listed in {MANIFEST_FILE}.", file=sys.stderr)
             raise SystemExit(2)
-        data = path.read_bytes()
+        data = source.read_bytes()
         actual_size = len(data)
         actual_hash = hashlib.sha256(data).hexdigest()
         if actual_size != expected[0] or actual_hash != expected[1]:
@@ -224,50 +227,38 @@ def validate_lua(payload: bytes) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--uninstall", action="store_true", help="remove only this package's marked hooks")
+    parser.add_argument("--uninstall", action="store_true", help="remove this standalone installation")
+    parser.add_argument("--aircraft-root", type=Path, help="Aircraft root; run from the extracted package")
     args = parser.parse_args()
-
-    require(LUA_FILE)
-    package_version = ""
-    if not args.uninstall:
-        package_version = verify_package()
-
-    original = LUA_FILE.read_bytes()
-    lines, eol, final_eol = split_lines(original)
-    changed = False
-    if args.uninstall:
-        changed |= remove_block(lines, DOFILE_BEGIN, DOFILE_END)
-        changed |= remove_block(lines, HOOK_BEGIN, HOOK_END)
-    else:
-        changed |= install_block(
-            lines, DOFILE_BEGIN, DOFILE_END, read_fragment(DOFILE_FRAGMENT), DOFILE_ANCHOR, before=False
-        )
-        changed |= install_block(
-            lines, HOOK_BEGIN, HOOK_END, read_fragment(HOOK_FRAGMENT), HOOK_ANCHOR, before=True
-        )
-
-    if not changed:
+    cwd = Path.cwd().resolve()
+    root = args.aircraft_root or (cwd.parents[3] if cwd.name == "B738.tablet" else cwd)
+    relative = "plugins/xlua/scripts/B738.tablet/B738.tablet.lua"
+    with Guard(root, PACKAGE_ROOT) as guard:
+        version = verify_package() if not args.uninstall else ""
+        original = safe(guard.root, relative).read_bytes()
+        lines, eol, final_eol = split_lines(original)
         if args.uninstall:
-            print("Tablet performance calculator hooks are already removed.")
+            remove_block(lines, DOFILE_BEGIN, DOFILE_END)
+            remove_block(lines, HOOK_BEGIN, HOOK_END)
         else:
-            print(f"Package {package_version} payload verified.")
-            print("Tablet hooks already installed and current; installation complete.")
-        return 0
-
-    modified = encode_lines(lines, eol, final_eol)
-    validate_lua(modified)
-    if not args.uninstall and not BACKUP_FILE.exists():
-        shutil.copy2(LUA_FILE, BACKUP_FILE)
-        print(f"Backup created: {BACKUP_FILE}")
-    elif not args.uninstall:
-        print(f"Backup already exists, not overwritten: {BACKUP_FILE}")
-    LUA_FILE.write_bytes(modified)
-    action = "Removed" if args.uninstall else "Installed or updated"
-    print(f"{action} Tablet performance calculator hooks in {LUA_FILE}.")
-    if not args.uninstall:
-        print(f"Package {package_version} payload verified; installation complete.")
+            install_block(lines, DOFILE_BEGIN, DOFILE_END, read_fragment(PACKAGE_ROOT / DOFILE_FRAGMENT),
+                          DOFILE_ANCHOR, before=False)
+            install_block(lines, HOOK_BEGIN, HOOK_END, read_fragment(PACKAGE_ROOT / HOOK_FRAGMENT),
+                          HOOK_ANCHOR, before=True)
+        modified = encode_lines(lines, eol, final_eol)
+        validate_lua(modified)
+        plan = {relative: modified}
+        for file in PAYLOADS:
+            target = "plugins/xlua/scripts/B738.tablet/" + file.name
+            plan[target] = guard.original_payload(target) if args.uninstall else (PACKAGE_ROOT / file).read_bytes()
+        guard.apply(plan, uninstall=args.uninstall, version=version)
+    print("Tablet Performance removed." if args.uninstall else "Tablet Performance installed. Restart X-Plane.")
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        raise SystemExit(main())
+    except (OSError, ValueError, KeyError) as error:
+        print("ERROR: " + str(error), file=sys.stderr)
+        raise SystemExit(1)

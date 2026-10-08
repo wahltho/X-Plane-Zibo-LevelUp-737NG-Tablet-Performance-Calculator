@@ -29,12 +29,17 @@ RUNTIME_FILES = (
     "B738.tablet_perf_core.lua",
     "B738.tablet_perf_adapter.lua",
 )
+# Known public runtime preimages. These hashes do not confer ownership.
+RUNTIME_SOURCE_SHA256 = {'B738.tablet_perf_data.lua': ['948fe226b5dc488526e096197157fb68566bdd96f6cf357496ca598b2b957527'], 'B738.tablet_perf_core.lua': ['fe99e266b2290652890598d21d06a8b468239cef70cea63c74e89c48959cd8d7'], 'B738.tablet_perf_adapter.lua': ['8314e09c1b1b422dfac86d3f3bb08ecb3d2428fde96a6726d5b4029e29c33741']}
+
 RELEASE_ROOT_FILES = (
     *RUNTIME_FILES,
     "Add_dofile.txt",
     "Add_perf_hooks.txt",
     "package-manifest.txt",
     "z_Install.py",
+    "standalone_guard.py",
+    "standalone-ownership.json",
     "README.md",
     "SOURCE.md",
     "LICENSE",
@@ -129,7 +134,7 @@ def make_toolkit_files() -> dict[Path, bytes]:
                 "payload": name,
                 "relativePath": f"plugins/xlua/scripts/B738.tablet/{name}",
                 "resultSha256": sha256(payload),
-                "sourceSha256": [],
+                "sourceSha256": RUNTIME_SOURCE_SHA256[name],
             }
         )
 
@@ -177,6 +182,8 @@ def make_legacy_manifest(toolkit_files: dict[Path, bytes]) -> bytes:
         ("dofile", "Add_dofile.txt"),
         ("hooks", "Add_perf_hooks.txt"),
         ("installer", "z_Install.py"),
+        ("ownership_guard", "standalone_guard.py"),
+        ("ownership_policy", "standalone-ownership.json"),
         ("readme", "README.md"),
         ("source", "SOURCE.md"),
         ("license", "LICENSE"),

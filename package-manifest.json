@@ -55,21 +55,27 @@
           "payload": "B738.tablet_perf_data.lua",
           "relativePath": "plugins/xlua/scripts/B738.tablet/B738.tablet_perf_data.lua",
           "resultSha256": "948fe226b5dc488526e096197157fb68566bdd96f6cf357496ca598b2b957527",
-          "sourceSha256": []
+          "sourceSha256": [
+            "948fe226b5dc488526e096197157fb68566bdd96f6cf357496ca598b2b957527"
+          ]
         },
         {
           "operation": "copy-file-v1",
           "payload": "B738.tablet_perf_core.lua",
           "relativePath": "plugins/xlua/scripts/B738.tablet/B738.tablet_perf_core.lua",
           "resultSha256": "fe99e266b2290652890598d21d06a8b468239cef70cea63c74e89c48959cd8d7",
-          "sourceSha256": []
+          "sourceSha256": [
+            "fe99e266b2290652890598d21d06a8b468239cef70cea63c74e89c48959cd8d7"
+          ]
         },
         {
           "operation": "copy-file-v1",
           "payload": "B738.tablet_perf_adapter.lua",
           "relativePath": "plugins/xlua/scripts/B738.tablet/B738.tablet_perf_adapter.lua",
           "resultSha256": "8314e09c1b1b422dfac86d3f3bb08ecb3d2428fde96a6726d5b4029e29c33741",
-          "sourceSha256": []
+          "sourceSha256": [
+            "8314e09c1b1b422dfac86d3f3bb08ecb3d2428fde96a6726d5b4029e29c33741"
+          ]
         }
       ]
     }
